@@ -31,7 +31,7 @@
         <SolidColorBrush x:Key="TextMutedBrush" Color="#64748B" />
     </Window.Resources>
 
-    <Grid Background="#73070B12">
+    <Grid Background="#59070B12">
         <Grid.RowDefinitions>
             <RowDefinition Height="36" />
             <RowDefinition Height="Auto" />
