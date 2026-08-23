@@ -129,7 +129,7 @@
         </Style>
     </ui:FluentWindow.Resources>
 
-    <Grid Background="#800B0F17">
+    <Grid Background="#B3080C14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" /> <!-- Title Bar -->
             <RowDefinition Height="*" />    <!-- Content Area -->

@@ -31,7 +31,7 @@
         <SolidColorBrush x:Key="TextMutedBrush" Color="#64748B" />
     </Window.Resources>
 
-    <Grid Background="#2005080E">
+    <Grid Background="#B3080C14">
         <Grid.RowDefinitions>
             <RowDefinition Height="36" />
             <RowDefinition Height="Auto" />
@@ -43,7 +43,7 @@
         <ui:TitleBar Grid.Row="0" Title="{Binding AppTitleWithVersion}" Icon="{ui:SymbolIcon Symbol=HardDrive24}" />
 
         <!-- 2. Header: Capsule Segmented Navigation & Inline Stats -->
-        <Border Grid.Row="1" Margin="20,2,20,10" Background="#331E293B" BorderBrush="#26FFFFFF" BorderThickness="1" CornerRadius="12" Padding="8,6">
+        <Border Grid.Row="1" Margin="20,2,20,10" Background="#990E1624" BorderBrush="#2638BDF8" BorderThickness="1" CornerRadius="12" Padding="8,6">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -1293,7 +1293,7 @@
         </Grid>
 
         <!-- 6. Slim Status Bar -->
-        <Border Grid.Row="3" Background="#3305080E" BorderBrush="#1AFFFFFF" BorderThickness="0,1,0,0" Padding="16,4">
+        <Border Grid.Row="3" Background="#80070B12" BorderBrush="#1F2937" BorderThickness="0,1,0,0" Padding="16,4">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />

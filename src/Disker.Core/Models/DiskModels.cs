@@ -49,37 +49,65 @@ namespace Disker.Core.Models
         [NotifyPropertyChangedFor(nameof(CardSubRowBorderColor))]
         private string _themeColor = "#10B981";
 
-        public string CardBgColor
+        public string CardBgColor => ThemeColor.ToUpperInvariant() switch
         {
-            get
-            {
-                if (ThemeColor.StartsWith("#") && ThemeColor.Length == 7)
-                    return $"#26{ThemeColor[1..]}";
-                return "#2610B981";
-            }
-        }
+            "#10B981" => "#0B241B",
+            "#8B5CF6" => "#1B1032",
+            "#06B6D4" => "#08242D",
+            "#F59E0B" => "#261A07",
+            "#EC4899" => "#2A0D1D",
+            "#3B82F6" => "#0D1B33",
+            "#EF4444" => "#2B0F12",
+            "#84CC16" => "#18260B",
+            "#F97316" => "#281507",
+            "#6366F1" => "#151536",
+            _ => "#151D2A"
+        };
 
-        public string CardBorderColor
+        public string CardBorderColor => ThemeColor.ToUpperInvariant() switch
         {
-            get
-            {
-                if (ThemeColor.StartsWith("#") && ThemeColor.Length == 7)
-                    return $"#59{ThemeColor[1..]}";
-                return "#5910B981";
-            }
-        }
+            "#10B981" => "#134E3A",
+            "#8B5CF6" => "#3B1E6D",
+            "#06B6D4" => "#0E4E5F",
+            "#F59E0B" => "#53380D",
+            "#EC4899" => "#591B3E",
+            "#3B82F6" => "#1C3B70",
+            "#EF4444" => "#5A1E24",
+            "#84CC16" => "#385413",
+            "#F97316" => "#532C0D",
+            "#6366F1" => "#30306E",
+            _ => "#232E42"
+        };
 
-        public string CardSubRowBgColor => "#26000000";
-
-        public string CardSubRowBorderColor
+        public string CardSubRowBgColor => ThemeColor.ToUpperInvariant() switch
         {
-            get
-            {
-                if (ThemeColor.StartsWith("#") && ThemeColor.Length == 7)
-                    return $"#33{ThemeColor[1..]}";
-                return "#3310B981";
-            }
-        }
+            "#10B981" => "#061A13",
+            "#8B5CF6" => "#130B24",
+            "#06B6D4" => "#051A21",
+            "#F59E0B" => "#1C1305",
+            "#EC4899" => "#1E0915",
+            "#3B82F6" => "#091324",
+            "#EF4444" => "#1E0A0C",
+            "#84CC16" => "#101A05",
+            "#F97316" => "#1C0E04",
+            "#6366F1" => "#0E0E24",
+            _ => "#0F1723"
+        };
+
+        public string CardSubRowBorderColor => ThemeColor.ToUpperInvariant() switch
+        {
+            "#10B981" => "#124233",
+            "#8B5CF6" => "#2F1C57",
+            "#06B6D4" => "#0D404D",
+            "#F59E0B" => "#422C0B",
+            "#EC4899" => "#471631",
+            "#3B82F6" => "#172F59",
+            "#EF4444" => "#47181D",
+            "#84CC16" => "#2C420F",
+            "#F97316" => "#42230B",
+            "#6366F1" => "#262657",
+            _ => "#1E293B"
+        };
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(ProtectionBadgeText))]
