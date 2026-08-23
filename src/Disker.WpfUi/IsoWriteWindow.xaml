@@ -11,7 +11,8 @@
     MinWidth="480" MaxWidth="560" MaxHeight="900"
     WindowStartupLocation="CenterOwner"
     ResizeMode="NoResize"
-    Background="#0B0F17"
+    WindowBackdropType="Acrylic"
+    Background="Transparent"
     ExtendsContentIntoTitleBar="True"
     WindowCornerPreference="Round">
 
@@ -128,7 +129,7 @@
         </Style>
     </ui:FluentWindow.Resources>
 
-    <Grid Background="#0B0F17">
+    <Grid Background="#800B0F17">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" /> <!-- Title Bar -->
             <RowDefinition Height="*" />    <!-- Content Area -->

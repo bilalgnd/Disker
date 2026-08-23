@@ -12,7 +12,8 @@
         Icon="Assets/app.ico"
         Height="870" Width="1200"
         WindowStartupLocation="CenterScreen"
-        WindowBackdropType="Mica"
+        WindowBackdropType="Acrylic"
+        Background="Transparent"
         ExtendsContentIntoTitleBar="True">
 
     <Window.Resources>
@@ -21,16 +22,16 @@
         <helpers:ProtectionColorConverter x:Key="ProtectionColorConverter" />
         <helpers:PercentToWidthConverter x:Key="PercentToWidthConverter" />
 
-        <!-- 2026 Minimal Dark Theme Palette -->
-        <SolidColorBrush x:Key="CardSurfaceBrush" Color="#151D2A" />
-        <SolidColorBrush x:Key="CardBorderBrush" Color="#232E42" />
-        <SolidColorBrush x:Key="SubRowSurfaceBrush" Color="#0F1723" />
-        <SolidColorBrush x:Key="SubRowBorderBrush" Color="#1E293B" />
+        <!-- 2026 Frosted Glass Acrylic Theme Palette -->
+        <SolidColorBrush x:Key="CardSurfaceBrush" Color="#8C131D2E" />
+        <SolidColorBrush x:Key="CardBorderBrush" Color="#3338BDF8" />
+        <SolidColorBrush x:Key="SubRowSurfaceBrush" Color="#660B111A" />
+        <SolidColorBrush x:Key="SubRowBorderBrush" Color="#2E334155" />
         <SolidColorBrush x:Key="TextSecondaryBrush" Color="#94A3B8" />
         <SolidColorBrush x:Key="TextMutedBrush" Color="#64748B" />
     </Window.Resources>
 
-    <Grid Background="#0B0F17">
+    <Grid Background="#73070B12">
         <Grid.RowDefinitions>
             <RowDefinition Height="36" />
             <RowDefinition Height="Auto" />
@@ -42,7 +43,7 @@
         <ui:TitleBar Grid.Row="0" Title="{Binding AppTitleWithVersion}" Icon="{ui:SymbolIcon Symbol=HardDrive24}" />
 
         <!-- 2. Header: Capsule Segmented Navigation & Inline Stats -->
-        <Border Grid.Row="1" Margin="20,2,20,10" Background="#111827" BorderBrush="#1F2937" BorderThickness="1" CornerRadius="12" Padding="8,6">
+        <Border Grid.Row="1" Margin="20,2,20,10" Background="#800F172A" BorderBrush="#2638BDF8" BorderThickness="1" CornerRadius="12" Padding="8,6">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -1292,7 +1293,7 @@
         </Grid>
 
         <!-- 6. Slim Status Bar -->
-        <Border Grid.Row="3" Background="#0B0F17" BorderBrush="#1F2937" BorderThickness="0,1,0,0" Padding="16,4">
+        <Border Grid.Row="3" Background="#80070B12" BorderBrush="#1F2937" BorderThickness="0,1,0,0" Padding="16,4">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
