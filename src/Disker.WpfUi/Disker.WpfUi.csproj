@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RootNamespace>Disker.App</RootNamespace>
+    <AssemblyName>DiskerApp</AssemblyName>
+    <BaseOutputPath>bin\ReleaseNew\</BaseOutputPath>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <!-- Otomatik Derleme Sayacı & Versiyonlandırma Hedefi -->
+  <Target Name="AutoIncrementBuildVersion" BeforeTargets="BeforeBuild">
+    <ReadLinesFromFile File="build_number.txt" Condition="Exists('build_number.txt')">
+      <Output TaskParameter="Lines" ItemName="RawBuildNumber" />
+    </ReadLinesFromFile>
+
+    <PropertyGroup>
+      <_CurrentBuildNumber Condition="'@(RawBuildNumber)' != ''">@(RawBuildNumber)</_CurrentBuildNumber>
+      <_CurrentBuildNumber Condition="'$(_CurrentBuildNumber)' == ''">1</_CurrentBuildNumber>
+      <_NextBuildNumber>$([MSBuild]::Add($(_CurrentBuildNumber), 1))</_NextBuildNumber>
+      <Version>1.0.$(_NextBuildNumber)</Version>
+      <AssemblyVersion>1.0.$(_NextBuildNumber).0</AssemblyVersion>
+      <FileVersion>1.0.$(_NextBuildNumber).0</FileVersion>
+      <InformationalVersion>1.0.$(_NextBuildNumber)</InformationalVersion>
+    </PropertyGroup>
+
+    <WriteLinesToFile File="build_number.txt" Lines="$(_NextBuildNumber)" Overwrite="true" />
+    <Message Importance="high" Text="🚀 Disker Derleme No: $(_NextBuildNumber) (Versiyon: $(Version))" />
+  </Target>
+
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+    <None Include="app.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <PackageReference Include="WPF-UI" Version="3.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Disker.Core\Disker.Core.csproj" />
+  </ItemGroup>
+
+</Project>

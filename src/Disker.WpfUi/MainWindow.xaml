@@ -1,0 +1,1306 @@
+<ui:FluentWindow x:Class="Disker.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:helpers="clr-namespace:Disker.App.Helpers"
+        xmlns:models="clr-namespace:Disker.Core.Models;assembly=Disker.Core"
+        xmlns:diag="clr-namespace:Disker.Core.Diagnostics;assembly=Disker.Core"
+        mc:Ignorable="d"
+        Title="Disker — Modern Windows 11 Disk Manager" 
+        Icon="Assets/app.ico"
+        Height="870" Width="1200"
+        WindowStartupLocation="CenterScreen"
+        WindowBackdropType="Mica"
+        ExtendsContentIntoTitleBar="True">
+
+    <Window.Resources>
+        <helpers:InverseBoolConverter x:Key="InverseBoolConverter" />
+        <helpers:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <helpers:ProtectionColorConverter x:Key="ProtectionColorConverter" />
+        <helpers:PercentToWidthConverter x:Key="PercentToWidthConverter" />
+
+        <!-- 2026 Minimal Dark Theme Palette -->
+        <SolidColorBrush x:Key="CardSurfaceBrush" Color="#151D2A" />
+        <SolidColorBrush x:Key="CardBorderBrush" Color="#232E42" />
+        <SolidColorBrush x:Key="SubRowSurfaceBrush" Color="#0F1723" />
+        <SolidColorBrush x:Key="SubRowBorderBrush" Color="#1E293B" />
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#94A3B8" />
+        <SolidColorBrush x:Key="TextMutedBrush" Color="#64748B" />
+    </Window.Resources>
+
+    <Grid Background="#0B0F17">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="36" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="28" />
+        </Grid.RowDefinitions>
+
+        <!-- 1. Windows 11 Compact TitleBar -->
+        <ui:TitleBar Grid.Row="0" Title="{Binding AppTitleWithVersion}" Icon="{ui:SymbolIcon Symbol=HardDrive24}" />
+
+        <!-- 2. Header: Capsule Segmented Navigation & Inline Stats -->
+        <Border Grid.Row="1" Margin="20,2,20,10" Background="#111827" BorderBrush="#1F2937" BorderThickness="1" CornerRadius="12" Padding="8,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Segmented Pill Tabs -->
+                <Border Background="#0B0F17" CornerRadius="8" Padding="3">
+                    <StackPanel Orientation="Horizontal">
+                        <!-- 1. Diskler -->
+                        <Border x:Name="TabDisksBorder" Background="#2563EB" CornerRadius="6" Padding="12,5" Cursor="Hand" MouseLeftButtonUp="OnNavTabClick" Tag="DisksPage" Margin="0,0,3,0">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="HardDrive20" FontSize="14" Foreground="White" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding L.TabDisks}" FontWeight="SemiBold" FontSize="12" Foreground="White" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 2. Sağlık -->
+                        <Border x:Name="TabHealthBorder" Background="Transparent" CornerRadius="6" Padding="12,5" Cursor="Hand" MouseLeftButtonUp="OnNavTabClick" Tag="HealthPage" Margin="0,0,3,0">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="HeartPulse20" FontSize="14" Foreground="#10B981" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding L.TabHealth}" FontWeight="SemiBold" FontSize="12" Foreground="#94A3B8" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 3. Sadece Ayarlar (İstendiği gibi sadeleştirildi) -->
+                        <Border x:Name="TabSettingsBorder" Background="Transparent" CornerRadius="6" Padding="12,5" Cursor="Hand" MouseLeftButtonUp="OnNavTabClick" Tag="SettingsPage" Margin="0,0,3,0">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Settings20" FontSize="14" Foreground="#A855F7" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding L.TabSettings}" FontWeight="SemiBold" FontSize="12" Foreground="#94A3B8" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 4. USB Flash Sekmesi — sadece USB takılıyken görünür -->
+                        <Border x:Name="TabUsbFlashBorder" Background="Transparent" CornerRadius="6" Width="32" Padding="0,5" Cursor="Hand" MouseLeftButtonUp="OnNavTabClick" Tag="UsbFlashPage" Margin="0,0,3,0"
+                                Visibility="{Binding HasUsbDrives, Converter={StaticResource BoolToVisibilityConverter}}"
+                                ToolTip="ISO → Bootable USB">
+                            <ui:SymbolIcon Symbol="UsbStick20" FontSize="15" Foreground="#F97316" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+
+                        <!-- 5. Göz İkonu (Sistem Bölümlerini Gizle / Göster) -->
+                        <Border x:Name="TabEyeBorder" Background="Transparent" CornerRadius="6" Width="32" Padding="0,5" Cursor="Hand" MouseLeftButtonUp="OnToggleEyeVisibilityClick" ToolTip="{Binding L.EyeShowTooltip}">
+                            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <!-- Göz Açık (Sistem Bölümleri Görünüyor) -->
+                                <ui:SymbolIcon Symbol="Eye20" FontSize="15" Foreground="#38BDF8" Visibility="{Binding ShowSystemPartitions, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                <!-- Göz Kapalı (Sistem Bölümleri Gizli) -->
+                                <ui:SymbolIcon Symbol="EyeOff20" FontSize="15" Foreground="#F59E0B" Visibility="{Binding ShowSystemPartitions, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=inverse}" />
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Right: Stats Chips + Refresh Button & Activity Ring -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Stat Chips -->
+                    <Border Background="#1E293B" CornerRadius="6" Padding="8,3" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding L.ChipTotalDisks}" FontSize="11" Foreground="#94A3B8" />
+                            <TextBlock Text="{Binding TotalDisksCount}" FontSize="11" FontWeight="Bold" Foreground="White" />
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#2E2412" BorderBrush="#854D0E" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding L.ChipProtected}" FontSize="11" Foreground="#FDE047" />
+                            <TextBlock Text="{Binding ProtectedDisksCount}" FontSize="11" FontWeight="Bold" Foreground="#FACC15" />
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#063222" BorderBrush="#065F46" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="0,0,12,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding L.ChipResettable}" FontSize="11" Foreground="#86EFAC" />
+                            <TextBlock Text="{Binding ResettableDisksCount}" FontSize="11" FontWeight="Bold" Foreground="#4ADE80" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Refresh Button -->
+                    <Border Background="#1F2937" CornerRadius="6" Padding="10,4" Cursor="Hand" MouseLeftButtonUp="OnRefreshClick">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="ArrowClockwise16" FontSize="12" Foreground="White" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding L.BtnRefresh}" FontSize="11" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 3. Main Views Area -->
+        <Grid Grid.Row="2" Margin="20,0,20,6" ClipToBounds="True">
+            <!-- 0. MERKEZİ MODERN YÜKLENİYOR (LOADING) EKRANI -->
+            <Grid Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}" HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="500">
+                <Border Background="#151D2A" BorderBrush="#232E42" BorderThickness="1" CornerRadius="14" Padding="40,28" MinWidth="320">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding L.LoadingDisksTitle}" FontSize="15" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,6" />
+                        <TextBlock Text="{Binding L.LoadingDisksDesc}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,16" />
+                        <ProgressBar IsIndeterminate="True" Height="6" Width="260" Foreground="#38BDF8" Background="#0F1723" BorderThickness="0" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- 1. DİSKLER VE BÖLÜMLER LİSTESİ -->
+            <Grid x:Name="DisksView" Visibility="Visible" ClipToBounds="True">
+                <ScrollViewer x:Name="DisksScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" ClipToBounds="True">
+                    <ItemsControl x:Name="DisksItemsControl" ItemsSource="{Binding Disks}" ClipToBounds="True">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:PhysicalDiskInfo}">
+                                <!-- Canlı Akıcı Slide Animasyonu ile Sürüklenen Disk Kartı -->
+                                <Border Margin="0,0,0,10" Background="{Binding CardBgColor}" BorderBrush="{Binding CardBorderColor}" BorderThickness="1" CornerRadius="10" Padding="10,12"
+                                        Opacity="{Binding CardOpacity}"
+                                        Panel.ZIndex="{Binding ZIndex}"
+                                        RenderTransformOrigin="0.5,0.5"
+                                        Tag="{Binding}">
+                                    <Border.RenderTransform>
+                                        <TransformGroup>
+                                            <ScaleTransform ScaleX="{Binding CardScale}" ScaleY="{Binding CardScale}" />
+                                            <TranslateTransform Y="{Binding DragOffsetY}" />
+                                        </TransformGroup>
+                                    </Border.RenderTransform>
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="22" />
+                                            <ColumnDefinition Width="4" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Sol 0: Canlı Sürükleme Tutamağı (⠿) -->
+                                        <Border Grid.Column="0" Background="Transparent" Cursor="SizeAll" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ToolTip="{Binding DataContext.L.DragTooltip, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}"
+                                                PreviewMouseLeftButtonDown="OnDragGripPreviewMouseLeftButtonDown"
+                                                PreviewMouseMove="OnDragGripPreviewMouseMove"
+                                                PreviewMouseLeftButtonUp="OnDragGripPreviewMouseLeftButtonUp"
+                                                Tag="{Binding}">
+                                            <TextBlock Text="⠿" FontSize="18" Foreground="#94A3B8" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                        </Border>
+
+                                        <!-- Sol 1: Diskin Canlı Tema Rengi Vurgu Çizgisi -->
+                                        <Border Grid.Column="1" Background="{Binding ThemeColor}" CornerRadius="2" Margin="0,0,8,0" VerticalAlignment="Stretch" />
+
+                                        <StackPanel Grid.Column="2" Margin="6,0,0,0">
+                                            <!-- Header Row: Disk Başlığı, Sadece İkonlu Koruma ve Sıfırla Butonları -->
+                                            <Grid Margin="0,0,0,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Sol: Tür Rozeti + Disk / Birim Adı + Donanım Modeli -->
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <!-- Medya Rozeti (NVMe, SSD, HDD) -->
+                                                    <Border Background="{Binding MediaTypeColor}" CornerRadius="4" Padding="6,2" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding MediaTypeTag}" FontSize="10" FontWeight="Bold" Foreground="White" />
+                                                    </Border>
+
+                                                    <!-- GPT / MBR -->
+                                                    <Border Background="#1E293B" CornerRadius="4" Padding="5,2" Margin="0,0,10,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding PartitionStyle}" FontSize="10" FontWeight="SemiBold" Foreground="#94A3B8" />
+                                                    </Border>
+
+                                                    <!-- Disk / Birim Adı (Hover Efektli & Tıklayınca Dosya Gezgini'nde Açar) -->
+                                                    <Border Background="Transparent" CornerRadius="6" Padding="6,2" Margin="0,0,8,0" Cursor="Hand" ToolTip="Dosya Gezgini'nde Aç (Open in File Explorer)" PreviewMouseLeftButtonUp="OnOpenDriveInExplorerClick" Tag="{Binding}">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="BorderThickness" Value="1" />
+                                                                <Setter Property="BorderBrush" Value="Transparent" />
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Background" Value="#1A38BDF8" />
+                                                                        <Setter Property="BorderBrush" Value="#38BDF8" />
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding PrimaryVolumeTitle}" FontWeight="Bold" FontSize="15" Foreground="{Binding ThemeColor}" VerticalAlignment="Center" />
+                                                            <ui:SymbolIcon Symbol="Folder20" FontSize="12" Foreground="{Binding ThemeColor}" Margin="6,0,0,0" VerticalAlignment="Center" Opacity="0.85" />
+                                                        </StackPanel>
+                                                    </Border>
+
+                                                    <!-- Donanım Modeli ve Numarası -->
+                                                    <TextBlock Text="{Binding FriendlyName, StringFormat='• {0}'}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                                    <TextBlock Text="{Binding Subtitle}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                                </StackPanel>
+
+                                                <!-- Sağ: Sadece İkonlu Koruma ve Sıfırlama Butonları -->
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+
+                                                    <!-- 💿 ISO Yaz Butonu — yalnızca USB belleklerde görünür -->
+                                                    <Border Background="#451A03" BorderBrush="#9A3412" BorderThickness="1"
+                                                            CornerRadius="6" Width="30" Height="28" Margin="0,0,6,0"
+                                                            Cursor="Hand" Tag="{Binding}"
+                                                            MouseLeftButtonUp="OnOpenUsbFlashFromCardClick"
+                                                            ToolTip="ISO → Bootable USB Yaz"
+                                                            Visibility="{Binding IsUsbDisk, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                        <ui:SymbolIcon Symbol="UsbStick20" FontSize="14" Foreground="#F97316" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Border>
+
+                                                    <!-- Koruma Butonu (Sadece İkon) -->
+                                                    <Border Background="{Binding ProtectionBgColor}" BorderBrush="{Binding ProtectionBorderColor}" BorderThickness="1" CornerRadius="6" Width="30" Height="28" Margin="0,0,6,0" Cursor="Hand" MouseLeftButtonUp="OnToggleProtectionClick" Tag="{Binding}" ToolTip="{Binding ProtectionBadgeText}">
+                                                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                            <!-- Koruma Açıkken İkon -->
+                                                            <ui:SymbolIcon Symbol="ShieldLock20" FontSize="14" Foreground="#FACC15" Visibility="{Binding IsProtected, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                            <!-- Koruma Kapalıyken İkon -->
+                                                            <ui:SymbolIcon Symbol="LockOpen20" FontSize="14" Foreground="#94A3B8" Visibility="{Binding IsProtected, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=inverse}" />
+                                                        </Grid>
+                                                    </Border>
+
+                                                    <!-- Sıfırlama Butonu (Sadece İkon) -> Modern Sıfırlama Modal Ekranını Açar -->
+                                                    <Border Background="#DC2626" CornerRadius="6" Width="30" Height="28" Cursor="Hand" MouseLeftButtonUp="OnOpenResetModalClick" Tag="{Binding}" Visibility="{Binding IsProtected, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=inverse}" ToolTip="{Binding DataContext.L.ResetDiskTooltip, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}">
+                                                        <ui:SymbolIcon Symbol="Delete20" FontSize="14" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- Bölümler Listesi: [İsim] [NTFS] [Toplam: ... GB] [Dolu: ... Boş: ...] [İlerleme Çubuğu] [Tek Bölüm Sil 🗑️] -->
+                                            <ItemsControl ItemsSource="{Binding Partitions}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="{x:Type models:PartitionInfo}">
+                                                        <!-- Canlı Hover Efektli ve Tıklanabilir Bölüm Satırı -->
+                                                        <Border Margin="0,2" CornerRadius="6" Padding="12,6"
+                                                                Background="{Binding RelativeSource={RelativeSource AncestorType=Border, AncestorLevel=2}, Path=DataContext.CardSubRowBgColor}"
+                                                                BorderBrush="{Binding RelativeSource={RelativeSource AncestorType=Border, AncestorLevel=2}, Path=DataContext.CardSubRowBorderColor}"
+                                                                BorderThickness="1"
+                                                                Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Style.Triggers>
+                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                            <Setter Property="BorderBrush" Value="#38BDF8" />
+                                                                            <Setter Property="Background" Value="#162234" />
+                                                                        </Trigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="170" />
+                                                                    <ColumnDefinition Width="70" />
+                                                                    <ColumnDefinition Width="130" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <!-- 1. Bölüm Adı ve Harfi (Tıklayınca Dosya Gezgini'nde Açar) -->
+                                                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Cursor="Hand" ToolTip="Dosya Gezgini'nde Aç (Open in File Explorer)" PreviewMouseLeftButtonUp="OnOpenDriveInExplorerClick" Tag="{Binding}">
+                                                                    <Border Background="{Binding PartitionColor}" Width="7" Height="7" CornerRadius="3.5" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                                    <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" FontSize="12" Foreground="#F1F5F9" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                                </StackPanel>
+
+                                                                <!-- 2. Dosya Sistemi & Türü -->
+                                                                <Border Grid.Column="1" Background="#1E293B" CornerRadius="4" Padding="5,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding FileSystem}" FontSize="10" FontWeight="SemiBold" Foreground="#94A3B8" />
+                                                                </Border>
+
+                                                                <!-- 3. Toplam Boyut (Açık ve Net 'Toplam: ...') -->
+                                                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding DataContext.L.TotalLabel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                                                    <TextBlock Text="{Binding SizeFormatted}" FontSize="11" FontWeight="Bold" Foreground="#E2E8F0" />
+                                                                </StackPanel>
+
+                                                                <!-- 4. Doluluk & Boşluk Değerleri (Sade ve Minimal) -->
+                                                                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                                                                    <TextBlock Text="{Binding UsedSpaceFormatted, StringFormat='Dolu: {0}'}" FontSize="11" FontWeight="SemiBold" Foreground="{Binding PartitionColor}" Margin="0,0,8,0" />
+                                                                    <TextBlock Text="{Binding FreeSpaceFormatted, StringFormat='•  Boş: {0}'}" FontSize="11" FontWeight="SemiBold" Foreground="#4ADE80" />
+                                                                </StackPanel>
+
+                                                                <!-- 5. İlerleme Çubuğu -->
+                                                                <ProgressBar Grid.Column="4" Value="{Binding UsedPercentage, Mode=OneWay}" Maximum="100" VerticalAlignment="Center" Height="6" Foreground="{Binding PartitionColor}" HorizontalAlignment="Stretch" Margin="0,0,8,0" />
+
+                                                                <!-- 6. Tek Bölüm Silme Butonu (🗑️) -->
+                                                                <Border Grid.Column="5" Background="#2B1114" BorderBrush="#7F1D1D" BorderThickness="1" CornerRadius="4" Width="24" Height="22" Cursor="Hand" MouseLeftButtonUp="OnOpenDeletePartitionModalClick" Tag="{Binding}" ToolTip="{Binding DataContext.L.DeletePartitionTooltip, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}">
+                                                                    <ui:SymbolIcon Symbol="Delete16" FontSize="11" Foreground="#EF4444" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                </Border>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- 2. SEKTÖR VE S.M.A.R.T. SAĞLIK ANALİZİ SAYFASI -->
+            <Grid x:Name="HealthView" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Disk Seçici Çubuğu -->
+                <Border Grid.Row="0" Margin="0,0,0,10" Background="{StaticResource CardSurfaceBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="10,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Yan yana Pill Butonlar Listesi -->
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding HealthReports}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type diag:DiskHealthReport}">
+                                        <Border Margin="0,0,8,0" CornerRadius="14" Background="{Binding PillColor}" Cursor="Hand" MouseLeftButtonUp="OnPillButtonClick" Tag="{Binding}">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Opacity" Value="0.65" />
+                                                    <Setter Property="BorderThickness" Value="2" />
+                                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                                    <Setter Property="Padding" Value="14,6" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                            <Setter Property="Opacity" Value="1.0" />
+                                                            <Setter Property="BorderBrush" Value="#FFFFFF" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding PillTitle}" FontWeight="Bold" FontSize="12" Foreground="White" Margin="0,0,6,0" />
+                                                <TextBlock Text="{Binding CapacityFormatted}" FontSize="10" FontWeight="Medium" Foreground="#E2E8F0" Opacity="0.9" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <Border Grid.Column="1" Background="#1E293B" CornerRadius="6" Padding="8,4" Cursor="Hand" MouseLeftButtonUp="OnRefreshClick" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="ArrowClockwise16" FontSize="11" Foreground="White" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding L.RefreshScanBtn}" FontSize="11" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Seçili Diskin CrystalDiskInfo Detaylı Donanım Paneli -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel DataContext="{Binding SelectedHealthReport}">
+                        <!-- CrystalDiskInfo Üst Başlık & Donanım Tablosu Paneli -->
+                        <Border Margin="0,0,0,10" Background="{StaticResource CardSurfaceBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16,14">
+                            <StackPanel>
+                                <TextBlock Text="{Binding HeaderDisplayTitle}" FontSize="18" FontWeight="Bold" Foreground="White" Margin="0,0,0,14" />
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Sol Kolon: Sağlık Durumu & Sıcaklık Rozetleri -->
+                                    <StackPanel Grid.Column="0" Margin="0,0,14,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding DataContext.L.HealthStatusTitle, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,3" />
+                                        <Border CornerRadius="8" Padding="12,8" Margin="0,0,0,10" HorizontalAlignment="Stretch">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                    <GradientStop Color="#0284C7" Offset="0" />
+                                                    <GradientStop Color="#0369A1" Offset="1" />
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="{Binding OverallHealthStatus}" FontSize="16" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" />
+                                                <TextBlock Text="{Binding RemainingLifePercentage, StringFormat='{}%{0}'}" FontSize="14" FontWeight="Bold" Foreground="#E0F2FE" HorizontalAlignment="Center" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <TextBlock Text="{Binding DataContext.L.TemperatureTitle, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,3" />
+                                        <Border CornerRadius="8" Padding="12,6" HorizontalAlignment="Stretch">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                    <GradientStop Color="#0EA5E9" Offset="0" />
+                                                    <GradientStop Color="#0284C7" Offset="1" />
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                            <TextBlock Text="{Binding TemperatureText}" FontSize="16" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" />
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- Orta Kolon -->
+                                    <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                                        <!-- Aygıt Yazılımı -->
+                                        <Border Margin="0,2" Background="{StaticResource SubRowSurfaceBrush}" BorderBrush="{StaticResource SubRowBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                                            <Grid>
+                                                <TextBlock Text="{Binding DataContext.L.FirmwareLabel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                                <TextBlock Text="{Binding FirmwareRevision}" FontSize="11" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Right" />
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Seri Numarası -->
+                                        <Border Margin="0,2" Background="{StaticResource SubRowSurfaceBrush}" BorderBrush="{StaticResource SubRowBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                                            <Grid>
+                                                <TextBlock Text="{Binding DataContext.L.SerialLabel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                                <TextBlock Text="{Binding SerialNumber}" FontSize="11" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Right" />
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Arabirim -->
+                                        <Border Margin="0,2" Background="{StaticResource SubRowSurfaceBrush}" BorderBrush="{StaticResource SubRowBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                                            <Grid>
+                                                <TextBlock Text="{Binding DataContext.L.InterfaceLabel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                                <TextBlock Text="{Binding InterfaceType}" FontSize="11" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Right" />
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Aktarım Kipi -->
+                                        <Border Margin="0,2" Background="{StaticResource SubRowSurfaceBrush}" BorderBrush="{StaticResource SubRowBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                                            <Grid>
+                                                <TextBlock Text="{Binding DataContext.L.TransferModeLabel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                                <TextBlock Text="{Binding TransferMode}" FontSize="11" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Right" />
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Sürücü Harfi -->
+                                        <Border Margin="0,2" Background="{StaticResource SubRowSurfaceBrush}" BorderBrush="{StaticResource SubRowBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                                            <Grid>
+                                                <TextBlock Text="{Binding DataContext.L.DriveLetterLabel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                                <TextBlock Text="{Binding DriveLetters}" FontSize="11" FontWeight="Bold" Foreground="#38BDF8" HorizontalAlignment="Right" />
+                                            </Grid>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- Sağ Kolon -->
+                                    <StackPanel Grid.Column="2">
+                                        <!-- Okunan Toplamı -->
+                                        <Border Margin="0,2" Background="{StaticResource SubRowSurfaceBrush}" BorderBrush="{StaticResource SubRowBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                                            <Grid>
+                                                <TextBlock Text="{Binding DataContext.L.TotalReadsLabel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                                <TextBlock Text="{Binding TotalReadsFormatted}" FontSize="11" FontWeight="SemiBold" Foreground="#60A5FA" HorizontalAlignment="Right" />
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Yazılan Toplamı -->
+                                        <Border Margin="0,2" Background="{StaticResource SubRowSurfaceBrush}" BorderBrush="{StaticResource SubRowBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                                            <Grid>
+                                                <TextBlock Text="{Binding DataContext.L.TotalWritesLabel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                                <TextBlock Text="{Binding TotalWritesFormatted}" FontSize="11" FontWeight="SemiBold" Foreground="#4ADE80" HorizontalAlignment="Right" />
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Çevirme Oranı -->
+                                        <Border Margin="0,2" Background="{StaticResource SubRowSurfaceBrush}" BorderBrush="{StaticResource SubRowBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                                            <Grid>
+                                                <TextBlock Text="{Binding DataContext.L.RotationalSpeedLabel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                                <TextBlock Text="{Binding RotationalSpeed}" FontSize="11" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Right" />
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Çalıştırılma Sayısı -->
+                                        <Border Margin="0,2" Background="{StaticResource SubRowSurfaceBrush}" BorderBrush="{StaticResource SubRowBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                                            <Grid>
+                                                <TextBlock Text="{Binding DataContext.L.PowerOnCountLabel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                                <TextBlock Text="{Binding PowerOnCount, StringFormat='{}{0} kez'}" FontSize="11" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Right" />
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Çalışma Süresi -->
+                                        <Border Margin="0,2" Background="{StaticResource SubRowSurfaceBrush}" BorderBrush="{StaticResource SubRowBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                                            <Grid>
+                                                <TextBlock Text="{Binding DataContext.L.PowerOnHoursLabel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                                <TextBlock Text="{Binding PowerOnHoursFormatted}" FontSize="11" FontWeight="SemiBold" Foreground="#FDE047" HorizontalAlignment="Right" />
+                                            </Grid>
+                                        </Border>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Alt Satırlar -->
+                                <Border Margin="0,6,0,2" Background="{StaticResource SubRowSurfaceBrush}" BorderBrush="{StaticResource SubRowBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8,5">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding DataContext.L.StandardLabel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Standard}" FontSize="11" FontWeight="SemiBold" Foreground="White" />
+                                    </Grid>
+                                </Border>
+
+                                <Border Margin="0,2,0,0" Background="{StaticResource SubRowSurfaceBrush}" BorderBrush="{StaticResource SubRowBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8,5">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding DataContext.L.FeaturesLabel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Features}" FontSize="11" FontWeight="SemiBold" Foreground="#67E8F9" />
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Sektör ve SMART Tabloları -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="420" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Sol -->
+                            <Border Grid.Column="0" Margin="0,0,10,0" Background="{StaticResource CardSurfaceBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="14">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding DataContext.L.SectorDiagTitle, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="14" FontWeight="Bold" Foreground="White" Margin="0,0,0,10" />
+
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,8">
+                                            <TextBlock Text="{Binding DataContext.L.TotalSectorsLabel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Text="{Binding TotalSectorsFormatted}" FontSize="12" FontWeight="SemiBold" Foreground="White" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,8">
+                                            <TextBlock Text="{Binding DataContext.L.PhysicalSectorLabel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Text="{Binding PhysicalSectorFormatted}" FontSize="12" FontWeight="SemiBold" Foreground="White" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="1" Grid.ColumnSpan="2">
+                                            <TextBlock Text="{Binding DataContext.L.FormatArchitectureLabel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Text="{Binding SectorFormatType}" FontSize="12" FontWeight="SemiBold" Foreground="White" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Border Background="{StaticResource SubRowSurfaceBrush}" BorderBrush="{StaticResource SubRowBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10">
+                                        <TextBlock Text="{Binding DiagnosticSummary}" FontSize="11" LineHeight="18" Foreground="#E2E8F0" TextWrapping="Wrap" />
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Sağ -->
+                            <Border Grid.Column="1" Background="{StaticResource CardSurfaceBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="14">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding DataContext.L.SmartTitle, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}" FontSize="14" FontWeight="Bold" Foreground="White" Margin="0,0,0,10" />
+
+                                    <ItemsControl ItemsSource="{Binding SmartAttributes}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type models:SmartAttribute}">
+                                                <Border Margin="0,2" Background="{StaticResource SubRowSurfaceBrush}" BorderBrush="{StaticResource SubRowBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8,5">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="45" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="80" />
+                                                            <ColumnDefinition Width="70" />
+                                                            <ColumnDefinition Width="80" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <TextBlock Grid.Column="0" Text="{Binding Id, StringFormat='{}0x{0:X2}'}" FontWeight="SemiBold" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" />
+                                                        <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="Medium" FontSize="11" Foreground="#F1F5F9" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Grid.Column="2" Text="{Binding CurrentValue, StringFormat='{}Değer: {0}'}" FontSize="11" Foreground="#94A3B8" VerticalAlignment="Center" />
+                                                        <TextBlock Grid.Column="3" Text="{Binding RawValue, StringFormat='{}Ham: {0}'}" FontSize="11" Foreground="#94A3B8" VerticalAlignment="Center" />
+                                                        <Border Grid.Column="4" Background="#064E3B" CornerRadius="4" Padding="5,2" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding StatusDescription}" FontSize="10" FontWeight="Bold" Foreground="#86EFAC" />
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- 3. AYARLAR SAYFASI (DİL SEÇİMİ VE RENK PALETLERİ) -->
+            <Grid x:Name="SettingsView" Visibility="Collapsed">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <!-- Bölüm 1: Dil Seçimi (Language Selection TR / EN) -->
+                        <Border Background="{StaticResource CardSurfaceBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,0,0,14">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <ui:SymbolIcon Symbol="LocalLanguage24" FontSize="26" Foreground="#38BDF8" Margin="0,0,12,0" />
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding L.LanguageSectionTitle}" FontSize="16" FontWeight="Bold" Foreground="White" />
+                                            <TextBlock Text="{Binding L.LanguageSectionDesc}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- TR / EN Dil Seçim Düğmeleri -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <!-- Türkçe (TR) Düğmesi -->
+                                        <Border x:Name="LangTrBorder" Margin="0,0,8,0" CornerRadius="8" Padding="16,8" Cursor="Hand" MouseLeftButtonUp="OnSelectLanguageClick" Tag="tr" Background="#2563EB" BorderBrush="#3B82F6" BorderThickness="1">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="🇹🇷" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                <TextBlock Text="Türkçe (TR)" FontWeight="Bold" FontSize="12" Foreground="White" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- English (EN) Düğmesi -->
+                                        <Border x:Name="LangEnBorder" CornerRadius="8" Padding="16,8" Cursor="Hand" MouseLeftButtonUp="OnSelectLanguageClick" Tag="en" Background="#1E293B" BorderBrush="#334155" BorderThickness="1">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="🇬🇧" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                <TextBlock Text="English (EN)" FontWeight="Bold" FontSize="12" Foreground="#94A3B8" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Bölüm 2: Disk Paneli Renk Temaları -->
+                        <Border Background="{StaticResource CardSurfaceBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,0,0,14">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                                    <ui:SymbolIcon Symbol="Color24" FontSize="28" Foreground="#A855F7" Margin="0,0,12,0" />
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding L.ColorSectionTitle}" FontSize="16" FontWeight="Bold" Foreground="White" />
+                                        <TextBlock Text="{Binding L.ColorSectionDesc}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Her Disk İçin Renk Paleti Ayar Satırı -->
+                                <ItemsControl ItemsSource="{Binding Disks}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type models:PhysicalDiskInfo}">
+                                            <Border Margin="0,4" Background="{Binding CardBgColor}" BorderBrush="{Binding CardBorderColor}" BorderThickness="1" CornerRadius="8" Padding="14,10">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="260" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <!-- Disk Bilgisi -->
+                                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <Border Width="12" Height="12" CornerRadius="6" Background="{Binding ThemeColor}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding PrimaryVolumeTitle}" FontWeight="Bold" FontSize="13" Foreground="{Binding ThemeColor}" />
+                                                            <TextBlock Text="{Binding FriendlyName}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+
+                                                    <!-- Renk Seçim Paleti Düğmeleri -->
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                        <Border Width="24" Height="24" CornerRadius="12" Background="#10B981" Margin="4,0" Cursor="Hand" MouseLeftButtonUp="OnSettingColorChoiceClick" Tag="Color:#10B981" ToolTip="Zümrüt Yeşili" BorderBrush="White" BorderThickness="1" />
+                                                        <Border Width="24" Height="24" CornerRadius="12" Background="#8B5CF6" Margin="4,0" Cursor="Hand" MouseLeftButtonUp="OnSettingColorChoiceClick" Tag="Color:#8B5CF6" ToolTip="Neon Mor" BorderBrush="White" BorderThickness="1" />
+                                                        <Border Width="24" Height="24" CornerRadius="12" Background="#06B6D4" Margin="4,0" Cursor="Hand" MouseLeftButtonUp="OnSettingColorChoiceClick" Tag="Color:#06B6D4" ToolTip="Camgöbeği" BorderBrush="White" BorderThickness="1" />
+                                                        <Border Width="24" Height="24" CornerRadius="12" Background="#F59E0B" Margin="4,0" Cursor="Hand" MouseLeftButtonUp="OnSettingColorChoiceClick" Tag="Color:#F59E0B" ToolTip="Kehribar Sarısı" BorderBrush="White" BorderThickness="1" />
+                                                        <Border Width="24" Height="24" CornerRadius="12" Background="#EC4899" Margin="4,0" Cursor="Hand" MouseLeftButtonUp="OnSettingColorChoiceClick" Tag="Color:#EC4899" ToolTip="Gül Pembesi" BorderBrush="White" BorderThickness="1" />
+                                                        <Border Width="24" Height="24" CornerRadius="12" Background="#3B82F6" Margin="4,0" Cursor="Hand" MouseLeftButtonUp="OnSettingColorChoiceClick" Tag="Color:#3B82F6" ToolTip="Elektrik Mavisi" BorderBrush="White" BorderThickness="1" />
+                                                        <Border Width="24" Height="24" CornerRadius="12" Background="#EF4444" Margin="4,0" Cursor="Hand" MouseLeftButtonUp="OnSettingColorChoiceClick" Tag="Color:#EF4444" ToolTip="Mercan Kırmızı" BorderBrush="White" BorderThickness="1" />
+                                                        <Border Width="24" Height="24" CornerRadius="12" Background="#84CC16" Margin="4,0" Cursor="Hand" MouseLeftButtonUp="OnSettingColorChoiceClick" Tag="Color:#84CC16" ToolTip="Fıstık Yeşili" BorderBrush="White" BorderThickness="1" />
+                                                        <Border Width="24" Height="24" CornerRadius="12" Background="#F97316" Margin="4,0" Cursor="Hand" MouseLeftButtonUp="OnSettingColorChoiceClick" Tag="Color:#F97316" ToolTip="Ateş Turuncusu" BorderBrush="White" BorderThickness="1" />
+                                                        <Border Width="24" Height="24" CornerRadius="12" Background="#6366F1" Margin="4,0" Cursor="Hand" MouseLeftButtonUp="OnSettingColorChoiceClick" Tag="Color:#6366F1" ToolTip="İndigo" BorderBrush="White" BorderThickness="1" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+
+        <!-- 4. MODERN DİSK SIFIRLAMA & BİÇİMLENDİRME MODAL EKRANI -->
+        <Grid Grid.Row="0" Grid.RowSpan="4" Background="#D9070B14" Visibility="{Binding IsResetModalOpen, Converter={StaticResource BoolToVisibilityConverter}}" Panel.ZIndex="10000">
+            <Border Width="560" HorizontalAlignment="Center" VerticalAlignment="Center" Background="#151D2A" BorderBrush="#334155" BorderThickness="1" CornerRadius="14" Padding="22">
+                <StackPanel>
+                    <!-- Modal Başlığı ve Kapat Butonu -->
+                    <Grid Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="#450A0A" BorderBrush="#991B1B" BorderThickness="1" CornerRadius="8" Width="36" Height="36" Margin="0,0,12,0">
+                                <ui:SymbolIcon Symbol="Delete24" FontSize="18" Foreground="#EF4444" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding L.ModalResetTitle}" FontSize="16" FontWeight="Bold" Foreground="White" />
+                                <TextBlock Text="{Binding L.ModalResetSubtitle}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Border Width="28" Height="28" CornerRadius="14" Background="#1E293B" HorizontalAlignment="Right" VerticalAlignment="Center" Cursor="Hand" MouseLeftButtonUp="OnCloseResetModalClick">
+                            <ui:SymbolIcon Symbol="Dismiss16" FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
+
+                    <!-- Seçili Disk Kartı Özeti -->
+                    <Border Background="#0F1723" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{Binding ResetTargetDisk.PrimaryVolumeTitle}" FontWeight="Bold" FontSize="14" Foreground="White" />
+                                <TextBlock Text="{Binding ResetTargetDisk.FriendlyName, StringFormat='{}Model: {0}'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <Border Background="{Binding ResetTargetDisk.MediaTypeColor}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Right">
+                                    <TextBlock Text="{Binding ResetTargetDisk.MediaTypeTag}" FontSize="10" FontWeight="Bold" Foreground="White" />
+                                </Border>
+                                <TextBlock Text="{Binding ResetTargetDisk.CapacityFormatted}" FontSize="12" FontWeight="Bold" Foreground="#38BDF8" HorizontalAlignment="Right" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Format Ayarları 1: Bölümleme Tablosu (Partition Scheme: GPT / MBR) -->
+                    <TextBlock Text="{Binding L.ModalPartitionScheme}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6" />
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border x:Name="SchemeGptBorder" Grid.Column="0" Margin="0,0,4,0" CornerRadius="8" Padding="12,8" Cursor="Hand" MouseLeftButtonUp="OnSelectPartitionSchemeClick" Tag="GPT" Background="#2563EB" BorderBrush="#3B82F6" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="GPT (GUID Partition Table)" FontWeight="Bold" FontSize="12" Foreground="White" />
+                                <TextBlock Text="{Binding L.ModalGptDesc}" FontSize="10" Foreground="#CBD5E1" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="SchemeMbrBorder" Grid.Column="1" Margin="4,0,0,0" CornerRadius="8" Padding="12,8" Cursor="Hand" MouseLeftButtonUp="OnSelectPartitionSchemeClick" Tag="MBR" Background="#1E293B" BorderBrush="#334155" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="MBR (Master Boot Record)" FontWeight="Bold" FontSize="12" Foreground="#94A3B8" />
+                                <TextBlock Text="{Binding L.ModalMbrDesc}" FontSize="10" Foreground="#64748B" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Format Ayarları 2: Dosya Sistemi (File System: NTFS / exFAT / FAT32) -->
+                    <TextBlock Text="{Binding L.ModalFileSystem}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6" />
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border x:Name="FsNtfsBorder" Grid.Column="0" Margin="0,0,4,0" CornerRadius="8" Padding="10,8" Cursor="Hand" MouseLeftButtonUp="OnSelectFileSystemClick" Tag="NTFS" Background="#2563EB" BorderBrush="#3B82F6" BorderThickness="1">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="NTFS" FontWeight="Bold" FontSize="12" Foreground="White" HorizontalAlignment="Center" />
+                                <TextBlock Text="Windows Standart" FontSize="10" Foreground="#CBD5E1" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="FsExFatBorder" Grid.Column="1" Margin="2,0,2,0" CornerRadius="8" Padding="10,8" Cursor="Hand" MouseLeftButtonUp="OnSelectFileSystemClick" Tag="exFAT" Background="#1E293B" BorderBrush="#334155" BorderThickness="1">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="exFAT" FontWeight="Bold" FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center" />
+                                <TextBlock Text="Win &amp; Mac &amp; TV" FontSize="10" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="FsFat32Border" Grid.Column="2" Margin="4,0,0,0" CornerRadius="8" Padding="10,8" Cursor="Hand" MouseLeftButtonUp="OnSelectFileSystemClick" Tag="FAT32" Background="#1E293B" BorderBrush="#334155" BorderThickness="1">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="FAT32" FontWeight="Bold" FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center" />
+                                <TextBlock Text="Eski Cihazlar" FontSize="10" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Format Ayarları 3: Sürücü Harfi (Drive Letter) & Birim Etiketi (Volume Label) -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Sürücü Harfi Seçimi -->
+                        <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                            <TextBlock Text="{Binding L.ModalDriveLetter}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6" />
+                            <ComboBox ItemsSource="{Binding AvailableDriveLetters}" SelectedItem="{Binding ResetDriveLetter, Mode=TwoWay}" FontSize="13" Padding="8,6" Background="#1E293B" Foreground="White" BorderBrush="#334155" HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
+                        <!-- Birim Etiketi Girişi -->
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="{Binding L.ModalVolumeLabel}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6" />
+                            <ui:TextBox Text="{Binding ResetVolumeLabel, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Örn: Depolama500" FontSize="13" Padding="10,6" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Kırmızı Uyarı Kutusu -->
+                    <Border Background="#2B1114" BorderBrush="#7F1D1D" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="20" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="⚠️" FontSize="13" VerticalAlignment="Top" Margin="0,1,6,0" />
+                            <TextBlock Grid.Column="1" Text="{Binding L.ModalResetWarning}" FontSize="11" Foreground="#FCA5A5" TextWrapping="Wrap" LineHeight="16" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Canlı Durum ve İlerleme Bildirimi -->
+                    <StackPanel Visibility="{Binding ResetIsRunning, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,14">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,6">
+                            <ui:ProgressRing IsIndeterminate="True" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding ResetProgressText}" FontSize="12" FontWeight="SemiBold" Foreground="#38BDF8" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Başarı Mesajı -->
+                    <Border Background="#064E3B" BorderBrush="#059669" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,14" Visibility="{Binding ResetSuccessMessage, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="{Binding ResetSuccessMessage}" FontSize="11" FontWeight="Bold" Foreground="#86EFAC" TextWrapping="Wrap" />
+                    </Border>
+
+                    <!-- Hata Mesajı -->
+                    <Border Background="#450A0A" BorderBrush="#DC2626" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,14" Visibility="{Binding ResetErrorMessage, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="{Binding ResetErrorMessage}" FontSize="11" FontWeight="Bold" Foreground="#FCA5A5" TextWrapping="Wrap" />
+                    </Border>
+
+                    <!-- Modal Alt Butonları -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- İptal / Kapat Butonu -->
+                        <Border Grid.Column="0" Margin="0,0,6,0" Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="0,10" Cursor="Hand" MouseLeftButtonUp="OnCloseResetModalClick">
+                            <TextBlock Text="{Binding L.ModalCancel}" FontWeight="SemiBold" FontSize="13" Foreground="#94A3B8" HorizontalAlignment="Center" />
+                        </Border>
+
+                        <!-- Diski Sıfırla ve Biçimlendir Butonu -->
+                        <Border Grid.Column="1" Margin="6,0,0,0" Background="#DC2626" CornerRadius="8" Padding="0,10" Cursor="Hand" MouseLeftButtonUp="OnExecuteResetModalClick">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <ui:SymbolIcon Symbol="Delete16" FontSize="13" Foreground="White" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding L.ModalConfirmReset}" FontWeight="Bold" FontSize="13" Foreground="White" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 5. TEK BÖLÜM SİLME VE BİRLEŞTİRME MODAL EKRANI -->
+        <Grid Grid.Row="0" Grid.RowSpan="4" Background="#D9070B14" Visibility="{Binding IsDeletePartitionModalOpen, Converter={StaticResource BoolToVisibilityConverter}}" Panel.ZIndex="10001">
+            <Border Width="500" HorizontalAlignment="Center" VerticalAlignment="Center" Background="#151D2A" BorderBrush="#334155" BorderThickness="1" CornerRadius="14" Padding="22">
+                <StackPanel>
+                    <!-- Başlık -->
+                    <Grid Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="#450A0A" BorderBrush="#991B1B" BorderThickness="1" CornerRadius="8" Width="36" Height="36" Margin="0,0,12,0">
+                                <ui:SymbolIcon Symbol="Delete24" FontSize="18" Foreground="#EF4444" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding L.ModalDeletePartTitle}" FontSize="16" FontWeight="Bold" Foreground="White" />
+                                <TextBlock Text="{Binding L.ModalDeletePartSubtitle}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Border Width="28" Height="28" CornerRadius="14" Background="#1E293B" HorizontalAlignment="Right" VerticalAlignment="Center" Cursor="Hand" MouseLeftButtonUp="OnCloseDeletePartitionModalClick">
+                            <ui:SymbolIcon Symbol="Dismiss16" FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
+
+                    <!-- Silinecek Bölüm Detay Kartı -->
+                    <Border Background="#0F1723" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,14">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{Binding DeletePartitionTarget.DisplayName}" FontWeight="Bold" FontSize="14" Foreground="#FCA5A5" />
+                                <TextBlock Text="{Binding DeletePartitionTargetDisk.FriendlyName, StringFormat='{}Disk: {0}'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding DeletePartitionTarget.SizeFormatted}" FontSize="13" FontWeight="Bold" Foreground="#38BDF8" HorizontalAlignment="Right" />
+                                <TextBlock Text="{Binding DeletePartitionTarget.FileSystem}" FontSize="10" Foreground="#94A3B8" HorizontalAlignment="Right" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Bilgilendirme ve Güvenlik Kutusu -->
+                    <Border Background="#063222" BorderBrush="#065F46" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="{Binding L.ModalDeletePartSafeTitle}" FontWeight="Bold" FontSize="11" Foreground="#86EFAC" Margin="0,0,0,3" />
+                            <TextBlock Text="{Binding L.ModalDeletePartSafeDesc}" FontSize="11" Foreground="#CBD5E1" TextWrapping="Wrap" LineHeight="16" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Canlı İlerleme -->
+                    <StackPanel Visibility="{Binding DeletePartitionIsRunning, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,14">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,6">
+                            <ui:ProgressRing IsIndeterminate="True" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding DeletePartitionProgressText}" FontSize="12" FontWeight="SemiBold" Foreground="#38BDF8" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Başarı Mesajı -->
+                    <Border Background="#064E3B" BorderBrush="#059669" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,14" Visibility="{Binding DeletePartitionSuccessMessage, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="{Binding DeletePartitionSuccessMessage}" FontSize="11" FontWeight="Bold" Foreground="#86EFAC" TextWrapping="Wrap" />
+                    </Border>
+
+                    <!-- Hata Mesajı -->
+                    <Border Background="#450A0A" BorderBrush="#DC2626" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,14" Visibility="{Binding DeletePartitionErrorMessage, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="{Binding DeletePartitionErrorMessage}" FontSize="11" FontWeight="Bold" Foreground="#FCA5A5" TextWrapping="Wrap" />
+                    </Border>
+
+                    <!-- Butonlar -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- İptal -->
+                        <Border Grid.Column="0" Margin="0,0,6,0" Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="0,10" Cursor="Hand" MouseLeftButtonUp="OnCloseDeletePartitionModalClick">
+                            <TextBlock Text="{Binding L.ModalCancel}" FontWeight="SemiBold" FontSize="13" Foreground="#94A3B8" HorizontalAlignment="Center" />
+                        </Border>
+
+                        <!-- Bölümü Sil & Birleştir -->
+                        <Border Grid.Column="1" Margin="6,0,0,0" Background="#DC2626" CornerRadius="8" Padding="0,10" Cursor="Hand" MouseLeftButtonUp="OnExecuteDeletePartitionModalClick">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <ui:SymbolIcon Symbol="Delete16" FontSize="13" Foreground="White" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding L.ModalConfirmDeletePart}" FontWeight="Bold" FontSize="13" Foreground="White" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 4. USB FLASH SEKMESİ -->
+        <Grid x:Name="UsbFlashView" Grid.Row="2" Margin="20,0,20,6" Visibility="Collapsed">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel MaxWidth="680" HorizontalAlignment="Center" Margin="0,20,0,20">
+
+                    <!-- Başlık Kartı -->
+                    <Border Background="#0F1A10" BorderBrush="#1A3321" BorderThickness="1" CornerRadius="12" Padding="20,16" Margin="0,0,0,16">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <Border Background="#1A3321" BorderBrush="#166534" BorderThickness="1" CornerRadius="8" Width="40" Height="40" Margin="0,0,14,0">
+                                    <ui:SymbolIcon Symbol="UsbStick20" FontSize="20" Foreground="#4ADE80" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding L.UsbFlashTitle}" FontSize="18" FontWeight="Bold" Foreground="White" />
+                                    <TextBlock Text="{Binding L.UsbFlashSubtitle}" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ADIM 1: ISO Seç -->
+                    <Border Background="#151D2A" BorderBrush="#232E42" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Step Badge -->
+                            <Border Grid.Column="0" Background="#1E3A5F" CornerRadius="20" Width="28" Height="28" Margin="0,0,12,0" VerticalAlignment="Top">
+                                <TextBlock Text="1" FontSize="13" FontWeight="Bold" Foreground="#60A5FA" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="{Binding L.UsbFlashIsoLabel}" FontSize="11" FontWeight="SemiBold" Foreground="#94A3B8" Margin="0,0,0,8" />
+
+                                <!-- ISO Seçilmemişse -->
+                                <Border Visibility="{Binding HasSelectedIso, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=inverse}"
+                                        Background="#1E293B" BorderBrush="#2563EB" BorderThickness="1"
+                                        CornerRadius="8" Padding="20,14" Cursor="Hand" MouseLeftButtonUp="OnSelectIsoFileClick">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <ui:SymbolIcon Symbol="DocumentArrowUp20" FontSize="28" Foreground="#3B82F6" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                                        <TextBlock Text="{Binding L.UsbFlashSelectIsoBtn}" FontSize="13" FontWeight="SemiBold" Foreground="#60A5FA" HorizontalAlignment="Center" />
+                                        <TextBlock Text=".iso, .img" FontSize="10" Foreground="#475569" HorizontalAlignment="Center" Margin="0,3,0,0" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- ISO Seçildiyse: Bilgi Kartı -->
+                                <Border Visibility="{Binding HasSelectedIso, Converter={StaticResource BoolToVisibilityConverter}}"
+                                        Background="#0D1B2A" BorderBrush="#1E4D6B" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding SelectedIsoDisplayName}" FontWeight="Bold" FontSize="13" Foreground="#7DD3FC" TextTrimming="CharacterEllipsis" />
+                                            <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                                <Border Background="#1E3A5F" CornerRadius="4" Padding="5,1" Margin="0,0,6,0">
+                                                    <TextBlock Text="{Binding SelectedIsoType}" FontSize="10" Foreground="#60A5FA" />
+                                                </Border>
+                                                <TextBlock Text="{Binding SelectedIsoSizeText}" FontSize="11" Foreground="#94A3B8" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <!-- Değiştir -->
+                                        <Border Grid.Column="1" Background="#1E293B" CornerRadius="6" Padding="8,4" Cursor="Hand" VerticalAlignment="Center" MouseLeftButtonUp="OnSelectIsoFileClick">
+                                            <TextBlock Text="Değiştir" FontSize="10" Foreground="#94A3B8" />
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- ADIM 2: Hedef USB -->
+                    <Border Background="#151D2A" BorderBrush="#232E42" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" Background="#2A1F0D" CornerRadius="20" Width="28" Height="28" Margin="0,0,12,0" VerticalAlignment="Top">
+                                <TextBlock Text="2" FontSize="13" FontWeight="Bold" Foreground="#FB923C" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="{Binding L.UsbFlashTargetLabel}" FontSize="11" FontWeight="SemiBold" Foreground="#94A3B8" Margin="0,0,0,8" />
+
+                                <!-- USB Yok -->
+                                <Border Visibility="{Binding HasUsbDrives, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=inverse}"
+                                        Background="#1A1410" BorderBrush="#451A03" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Warning20" FontSize="16" Foreground="#FB923C" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding L.UsbFlashNoUsbFound}" FontSize="11" Foreground="#FED7AA" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- USB Listesi -->
+                                <StackPanel Visibility="{Binding HasUsbDrives, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <ListBox x:Name="UsbDriveListBox"
+                                             ItemsSource="{Binding UsbDrives}"
+                                             SelectedItem="{Binding SelectedUsbTarget, Mode=TwoWay}"
+                                             Background="Transparent" BorderThickness="0"
+                                             MaxHeight="180">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="ListBoxItem">
+                                                <Setter Property="Padding" Value="0" />
+                                                <Setter Property="Margin" Value="0,0,0,6" />
+                                                <Setter Property="Background" Value="Transparent" />
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="ListBoxItem">
+                                                            <Border x:Name="ItemBorder"
+                                                                    Background="#1A2535" BorderBrush="#2E4057" BorderThickness="1"
+                                                                    CornerRadius="8" Padding="12,8" Cursor="Hand">
+                                                                <ContentPresenter />
+                                                                <VisualStateManager.VisualStateGroups>
+                                                                    <VisualStateGroup x:Name="SelectionStates">
+                                                                        <VisualState x:Name="Selected">
+                                                                            <Storyboard>
+                                                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ItemBorder" Storyboard.TargetProperty="Background">
+                                                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Brushes.Transparent}" />
+                                                                                </ObjectAnimationUsingKeyFrames>
+                                                                            </Storyboard>
+                                                                        </VisualState>
+                                                                        <VisualState x:Name="Unselected" />
+                                                                    </VisualStateGroup>
+                                                                </VisualStateManager.VisualStateGroups>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsSelected" Value="True">
+                                                                    <Setter TargetName="ItemBorder" Property="Background" Value="#0E2A1A" />
+                                                                    <Setter TargetName="ItemBorder" Property="BorderBrush" Value="#16A34A" />
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type models:PhysicalDiskInfo}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Grid.Column="0" Background="#06B6D4" CornerRadius="4" Padding="5,1" Margin="0,0,10,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="USB" FontSize="9" FontWeight="Bold" Foreground="White" />
+                                                    </Border>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding PrimaryVolumeTitle}" FontWeight="SemiBold" FontSize="12" Foreground="White" />
+                                                        <TextBlock Text="{Binding FriendlyName}" FontSize="10" Foreground="#94A3B8" Margin="0,1,0,0" TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="2" Text="{Binding SizeFormatted}" FontSize="12" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Center" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+
+                                    <!-- Güvenlik Uyarısı -->
+                                    <Border Background="#0D1A0D" BorderBrush="#14532D" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,6,0,0">
+                                        <TextBlock Text="{Binding L.UsbFlashOnlyUsb}" FontSize="10" Foreground="#86EFAC" TextWrapping="Wrap" />
+                                    </Border>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- İlerleme Kartı (Yazarken) -->
+                    <Border Visibility="{Binding IsIsoWriting, Converter={StaticResource BoolToVisibilityConverter}}"
+                            Background="#151D2A" BorderBrush="#232E42" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <ui:ProgressRing IsIndeterminate="True" Width="32" Height="32" Foreground="#F97316" Margin="0,0,12,0" />
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding IsoWriteStatusText}" FontSize="12" FontWeight="SemiBold" Foreground="#FDBA74" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding IsoWriteSpeedText}" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Progress Bar -->
+                            <Border Background="#0F1723" CornerRadius="4" Height="6" Margin="0,0,0,6">
+                                <Border Background="#F97316" CornerRadius="4" HorizontalAlignment="Left">
+                                    <Border.Width>
+                                        <MultiBinding Converter="{StaticResource PercentToWidthConverter}">
+                                            <Binding Path="IsoWriteProgressPercent" />
+                                            <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=Border, AncestorLevel=2}" />
+                                        </MultiBinding>
+                                    </Border.Width>
+                                </Border>
+                            </Border>
+                            <Grid>
+                                <TextBlock Text="{Binding IsoWriteProgressPercent, StringFormat='{}{0:F0}%'}" FontSize="11" Foreground="#94A3B8" HorizontalAlignment="Left" />
+                                <Border Background="#7C2D12" CornerRadius="6" Padding="10,3" Cursor="Hand" HorizontalAlignment="Right" MouseLeftButtonUp="OnCancelIsoWriteClick">
+                                    <TextBlock Text="{Binding L.UsbFlashCancelBtn}" FontSize="11" FontWeight="SemiBold" Foreground="#FED7AA" />
+                                </Border>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Başarı Mesajı -->
+                    <Border Visibility="{Binding IsoWriteSuccessMessage, Converter={StaticResource BoolToVisibilityConverter}}"
+                            Background="#064E3B" BorderBrush="#059669" BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,0,12">
+                        <TextBlock Text="{Binding IsoWriteSuccessMessage}" FontSize="12" FontWeight="Bold" Foreground="#86EFAC" TextWrapping="Wrap" />
+                    </Border>
+
+                    <!-- Hata Mesajı -->
+                    <Border Visibility="{Binding IsoWriteErrorMessage, Converter={StaticResource BoolToVisibilityConverter}}"
+                            Background="#450A0A" BorderBrush="#DC2626" BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,0,12">
+                        <TextBlock Text="{Binding IsoWriteErrorMessage}" FontSize="12" FontWeight="Bold" Foreground="#FCA5A5" TextWrapping="Wrap" />
+                    </Border>
+
+                    <!-- Yaz Butonu -->
+                    <Border Visibility="{Binding IsIsoWriting, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=inverse}"
+                            Background="#9A3412" CornerRadius="10" Padding="0,14" Cursor="Hand" MouseLeftButtonUp="OnStartIsoWriteClick">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasSelectedIso}" Value="False">
+                                        <Setter Property="Opacity" Value="0.4" />
+                                        <Setter Property="IsEnabled" Value="False" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding HasUsbDrives}" Value="False">
+                                        <Setter Property="Opacity" Value="0.4" />
+                                        <Setter Property="IsEnabled" Value="False" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <ui:SymbolIcon Symbol="ArrowDownload20" FontSize="16" Foreground="White" Margin="0,0,8,0" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding L.UsbFlashStartBtn}" FontWeight="Bold" FontSize="14" Foreground="White" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- 5. ISO YAZMA ONAY MODALI -->
+        <Grid Grid.Row="0" Grid.RowSpan="4" Background="#D9070B14" Visibility="{Binding IsIsoWriteModalOpen, Converter={StaticResource BoolToVisibilityConverter}}" Panel.ZIndex="10002">
+            <Border Width="480" HorizontalAlignment="Center" VerticalAlignment="Center" Background="#151D2A" BorderBrush="#334155" BorderThickness="1" CornerRadius="14" Padding="22">
+                <StackPanel>
+                    <!-- Başlık -->
+                    <Grid Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="#451A03" BorderBrush="#9A3412" BorderThickness="1" CornerRadius="8" Width="36" Height="36" Margin="0,0,12,0">
+                                <ui:SymbolIcon Symbol="UsbStick20" FontSize="18" Foreground="#F97316" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding L.ModalIsoWriteTitle}" FontSize="16" FontWeight="Bold" Foreground="White" />
+                                <TextBlock Text="{Binding L.ModalIsoWriteSubtitle}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Border Width="28" Height="28" CornerRadius="14" Background="#1E293B" HorizontalAlignment="Right" VerticalAlignment="Center" Cursor="Hand" MouseLeftButtonUp="OnCloseIsoWriteModalClick">
+                            <ui:SymbolIcon Symbol="Dismiss16" FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
+
+                    <!-- ISO + Hedef Bilgisi -->
+                    <Border Background="#0F1723" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,12">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <TextBlock Text="ISO:" FontSize="11" Foreground="#64748B" Width="60" />
+                                <TextBlock Text="{Binding SelectedIsoDisplayName}" FontSize="11" FontWeight="SemiBold" Foreground="#7DD3FC" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding SelectedIsoSizeText, StringFormat=' ({0})'}" FontSize="11" Foreground="#94A3B8" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Hedef USB:" FontSize="11" Foreground="#64748B" Width="60" />
+                                <TextBlock Text="{Binding SelectedUsbTarget.PrimaryVolumeTitle}" FontSize="11" FontWeight="SemiBold" Foreground="#F97316" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Kırmızı Uyarı Kutusu -->
+                    <Border Background="#450A0A" BorderBrush="#991B1B" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,18">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <ui:SymbolIcon Symbol="Warning20" FontSize="14" Foreground="#EF4444" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="VERİ KAYBI UYARISI" FontWeight="Bold" FontSize="12" Foreground="#EF4444" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding L.ModalIsoWriteWarning}" FontSize="11" Foreground="#FCA5A5" TextWrapping="Wrap" LineHeight="17" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Butonlar -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Margin="0,0,6,0" Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="0,10" Cursor="Hand" MouseLeftButtonUp="OnCloseIsoWriteModalClick">
+                            <TextBlock Text="{Binding L.ModalIsoWriteCancel}" FontWeight="SemiBold" FontSize="13" Foreground="#94A3B8" HorizontalAlignment="Center" />
+                        </Border>
+
+                        <Border Grid.Column="1" Margin="6,0,0,0" Background="#C2410C" CornerRadius="8" Padding="0,10" Cursor="Hand" MouseLeftButtonUp="OnConfirmIsoWriteClick">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <ui:SymbolIcon Symbol="ArrowDownload16" FontSize="13" Foreground="White" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding L.ModalIsoWriteConfirm}" FontWeight="Bold" FontSize="13" Foreground="White" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 6. Slim Status Bar -->
+        <Border Grid.Row="3" Background="#0B0F17" BorderBrush="#1F2937" BorderThickness="0,1,0,0" Padding="16,4">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding StatusMessage}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding AppVersion, StringFormat='{}Disker {0} • Win32 IOCTL Native Engine'}" FontSize="10" Foreground="#475569" VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+    </Grid>
+</ui:FluentWindow>

@@ -1,0 +1,27 @@
+## .NET & Visual Studio
+bin/
+obj/
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+.idea/
+.vscode/
+
+## Build Outputs & Temp
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.tmp
+*.log
+
+## OS Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+## External Reference Repository
+rufus/

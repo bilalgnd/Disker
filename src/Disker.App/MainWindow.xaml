@@ -1,0 +1,10 @@
+<Window
+    x:Class="Disker.App.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Disker">
+
+    <Grid>
+        <TextBlock Text="Disker" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Grid>
+</Window>
