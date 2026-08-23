@@ -25,11 +25,19 @@ Canlı renk kodlu disk kartları, sürükle-bırak sıralama, akıllı donanım 
 
 ### 2. ISO → Bootable USB Yazıcı (Create Bootable USB)
 Rufus Win32 DD mimarisinden esinlenen tam teşekküllü, sektör hizalamalı ham imaj yazıcı:
-![Create Bootable USB](ss/02_create_bootable_usb_popup.png)
+![Create Bootable USB](ss/01-3_create_bootable_usb_popup.png)
 
-### 3. S.M.A.R.T. Sağlık ve Sektör Teşhisi
+### 3. Modern Dahili Sıfırlama ve Biçimlendirme Modalı
+Bölümleme tablosu (GPT/MBR), dosya sistemi (NTFS/exFAT/FAT32) ve sürücü harfi yapılandırması:
+![Disk Sıfırlama Modalı](ss/01-2_disk_format.png)
+
+### 4. S.M.A.R.T. Sağlık ve Sektör Teşhisi
 Gerçek zamanlı sıcaklık, tahmini sağlık skoru, RAW S.M.A.R.T. parametreleri ve sektör geometrisi:
-![SMART Sağlık Teşhisi](ss/03_smart_health_diagnostics.png)
+![SMART Sağlık Teşhisi](ss/02_smart_health_diagnostics.png)
+
+### 5. Özelleştirilebilir Renk Temaları ve Dil Ayarları
+10 farklı canlı disk renk paleti ve anında çift dilli (TR / EN) arayüz:
+![Ayarlar ve Temalar](ss/03_settings.png)
 
 ---
 
