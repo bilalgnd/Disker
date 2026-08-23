@@ -230,16 +230,16 @@
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
 
                                                     <!-- 💿 ISO Yaz Butonu — yalnızca USB belleklerde görünür -->
-                                                    <Border Background="#451A03" BorderBrush="#9A3412" BorderThickness="1"
+                                                    <Border Background="#33F97316" BorderBrush="#80F97316" BorderThickness="1"
                                                             CornerRadius="6" Width="30" Height="28" Margin="0,0,6,0"
                                                             Cursor="Hand" Tag="{Binding}"
                                                             MouseLeftButtonUp="OnOpenUsbFlashFromCardClick"
                                                             ToolTip="ISO → Bootable USB Yaz"
                                                             Visibility="{Binding IsUsbDisk, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                        <ui:SymbolIcon Symbol="UsbStick20" FontSize="14" Foreground="#F97316" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        <ui:SymbolIcon Symbol="UsbStick20" FontSize="14" Foreground="#FB923C" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                     </Border>
 
-                                                    <!-- Koruma Butonu (Sadece İkon) -->
+                                                    <!-- Koruma Butonu (Akrilik Cam Buton) -->
                                                     <Border Background="{Binding ProtectionBgColor}" BorderBrush="{Binding ProtectionBorderColor}" BorderThickness="1" CornerRadius="6" Width="30" Height="28" Margin="0,0,6,0" Cursor="Hand" MouseLeftButtonUp="OnToggleProtectionClick" Tag="{Binding}" ToolTip="{Binding ProtectionBadgeText}">
                                                         <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
                                                             <!-- Koruma Açıkken İkon -->
@@ -249,9 +249,9 @@
                                                         </Grid>
                                                     </Border>
 
-                                                    <!-- Sıfırlama Butonu (Sadece İkon) -> Modern Sıfırlama Modal Ekranını Açar -->
-                                                    <Border Background="#DC2626" CornerRadius="6" Width="30" Height="28" Cursor="Hand" MouseLeftButtonUp="OnOpenResetModalClick" Tag="{Binding}" Visibility="{Binding IsProtected, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=inverse}" ToolTip="{Binding DataContext.L.ResetDiskTooltip, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}">
-                                                        <ui:SymbolIcon Symbol="Delete20" FontSize="14" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    <!-- Sıfırlama Butonu (Akrilik Kırmızı Cam Buton) -> Modern Sıfırlama Modal Ekranını Açar -->
+                                                    <Border Background="#38EF4444" BorderBrush="#80EF4444" BorderThickness="1" CornerRadius="6" Width="30" Height="28" Cursor="Hand" MouseLeftButtonUp="OnOpenResetModalClick" Tag="{Binding}" Visibility="{Binding IsProtected, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=inverse}" ToolTip="{Binding DataContext.L.ResetDiskTooltip, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}">
+                                                        <ui:SymbolIcon Symbol="Delete20" FontSize="14" Foreground="#FCA5A5" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                     </Border>
                                                 </StackPanel>
                                             </Grid>
@@ -312,9 +312,9 @@
                                                                 <!-- 5. İlerleme Çubuğu -->
                                                                 <ProgressBar Grid.Column="4" Value="{Binding UsedPercentage, Mode=OneWay}" Maximum="100" VerticalAlignment="Center" Height="6" Foreground="{Binding PartitionColor}" HorizontalAlignment="Stretch" Margin="0,0,8,0" />
 
-                                                                <!-- 6. Tek Bölüm Silme Butonu (🗑️) -->
-                                                                <Border Grid.Column="5" Background="#2B1114" BorderBrush="#7F1D1D" BorderThickness="1" CornerRadius="4" Width="24" Height="22" Cursor="Hand" MouseLeftButtonUp="OnOpenDeletePartitionModalClick" Tag="{Binding}" ToolTip="{Binding DataContext.L.DeletePartitionTooltip, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}">
-                                                                    <ui:SymbolIcon Symbol="Delete16" FontSize="11" Foreground="#EF4444" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                <!-- 6. Tek Bölüm Silme Butonu (🗑️ Akrilik Kırmızı Cam) -->
+                                                                <Border Grid.Column="5" Background="#2BEE4444" BorderBrush="#66EF4444" BorderThickness="1" CornerRadius="4" Width="24" Height="22" Cursor="Hand" MouseLeftButtonUp="OnOpenDeletePartitionModalClick" Tag="{Binding}" ToolTip="{Binding DataContext.L.DeletePartitionTooltip, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}}">
+                                                                    <ui:SymbolIcon Symbol="Delete16" FontSize="11" Foreground="#FCA5A5" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                                 </Border>
                                                             </Grid>
                                                         </Border>

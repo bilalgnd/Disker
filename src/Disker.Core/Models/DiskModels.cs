@@ -128,8 +128,8 @@ namespace Disker.Core.Models
         
         public bool IsResettable => !IsProtected;
         public string ProtectionBadgeText => IsProtected ? "🛡️ Koruma Aktif" : "🔓 Koruma Kapalı";
-        public string ProtectionBgColor => IsProtected ? "#78350F" : "#1E293B";
-        public string ProtectionBorderColor => IsProtected ? "#FACC15" : "#334155";
+        public string ProtectionBgColor => IsProtected ? "#38EAB308" : "#2638BDF8";
+        public string ProtectionBorderColor => IsProtected ? "#80FACC15" : "#4064748B";
         public string ProtectionTextColor => IsProtected ? "#FEF08A" : "#94A3B8";
 
         // Akıllı Donanım Tespiti
