@@ -21,15 +21,15 @@
 
 ### 1. Ana Disk ve Bölüm Yönetimi (Fiziksel Diskler)
 Canlı renk kodlu disk kartları, sürükle-bırak sıralama, akıllı donanım tespiti (NVMe, SSD, HDD, USB) ve tek tıkla koruma kilidi:
-![Ana Disk Yönetimi](ss/main_disks_view.png)
+![Ana Disk Yönetimi](ss/01_physical_disks_view.png)
 
 ### 2. ISO → Bootable USB Yazıcı (Create Bootable USB)
 Rufus Win32 DD mimarisinden esinlenen tam teşekküllü, sektör hizalamalı ham imaj yazıcı:
-![Create Bootable USB](ss/create_bootable_usb.png)
+![Create Bootable USB](ss/02_create_bootable_usb_popup.png)
 
 ### 3. S.M.A.R.T. Sağlık ve Sektör Teşhisi
 Gerçek zamanlı sıcaklık, tahmini sağlık skoru, RAW S.M.A.R.T. parametreleri ve sektör geometrisi:
-![SMART Sağlık Teşhisi](ss/smart_health_diagnostics.png)
+![SMART Sağlık Teşhisi](ss/03_smart_health_diagnostics.png)
 
 ---
 
